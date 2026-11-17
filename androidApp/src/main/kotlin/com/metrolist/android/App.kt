@@ -73,6 +73,7 @@ import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -288,9 +289,12 @@ class App :
                     s.sshTunnelProxyUser,
                     s.sshTunnelProxyPassword,
                 )
-            }.collectLatest {
-                SshTunnelManager.startFromSettings()
             }
+                .drop(1)
+                .distinctUntilChanged()
+                .collectLatest {
+                    SshTunnelManager.startFromSettings()
+                }
         }
 
         get<CoroutineScope>().launch {
