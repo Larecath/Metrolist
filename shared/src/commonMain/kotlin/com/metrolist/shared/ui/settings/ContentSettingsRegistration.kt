@@ -106,6 +106,68 @@ internal fun SettingsUiRegistryBuilder.registerContentSettings(host: SharedSetti
                 }
             }
         }
+        group("sshTunnel", "SSH Прокси / Туннель") {
+            switch(
+                id = "sshTunnelEnabled",
+                title = "Использовать SSH-туннель",
+                description = "Маршрутизирует поиск, обложки и воспроизведение через твой VPS",
+                checked = settings.sshTunnelEnabled,
+            ) {
+                settings.sshTunnelEnabled = it
+            }
+            if (settings.sshTunnelEnabled) {
+                text(
+                    id = "sshTunnelHost",
+                    title = "Сервер SSH",
+                    value = settings.sshTunnelHost,
+                    placeholder = "example.com / IP",
+                ) { settings.sshTunnelHost = it }
+
+                text(
+                    id = "sshTunnelPort",
+                    title = "Порт SSH",
+                    value = settings.sshTunnelPort.toString(),
+                    placeholder = "22222",
+                ) { settings.sshTunnelPort = it.toIntOrNull() ?: 22 }
+
+                text(
+                    id = "sshTunnelUser",
+                    title = "Пользователь SSH",
+                    value = settings.sshTunnelUser,
+                    placeholder = "metrolist",
+                ) { settings.sshTunnelUser = it }
+
+                text(
+                    id = "sshTunnelPassword",
+                    title = "Пароль SSH",
+                    value = settings.sshTunnelPassword,
+                    placeholder = "••••••••",
+                    secret = true,
+                ) { settings.sshTunnelPassword = it }
+
+                text(
+                    id = "sshTunnelRemotePort",
+                    title = "Порт SOCKS на сервере",
+                    value = settings.sshTunnelRemotePort.toString(),
+                    placeholder = "44501",
+                ) { settings.sshTunnelRemotePort = it.toIntOrNull() ?: 44501 }
+
+                text(
+                    id = "sshTunnelProxyUser",
+                    title = "Пользователь SOCKS",
+                    value = settings.sshTunnelProxyUser,
+                    placeholder = "proxy_user",
+                ) { settings.sshTunnelProxyUser = it }
+
+                text(
+                    id = "sshTunnelProxyPassword",
+                    title = "Пароль SOCKS",
+                    value = settings.sshTunnelProxyPassword,
+                    placeholder = "••••••••",
+                    secret = true,
+                ) { settings.sshTunnelProxyPassword = it }
+            }
+        }
         group("filtering", stringResource(Res.string.content_filters_filtering)) {
             switch(
                 id = "hideExplicit",

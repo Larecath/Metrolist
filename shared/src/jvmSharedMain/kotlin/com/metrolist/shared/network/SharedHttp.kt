@@ -28,6 +28,7 @@ actual fun Throwable.isHttpTransportException(): Boolean = this is IOException
 val sharedOkHttpClient: OkHttpClient by lazy {
     OkHttpClient
         .Builder()
+        .proxySelector(GlobalProxySelector)
         .connectionPool(ConnectionPool(10, 5, TimeUnit.MINUTES))
         .eventListenerFactory {
             object : EventListener() {

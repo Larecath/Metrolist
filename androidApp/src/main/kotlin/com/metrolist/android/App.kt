@@ -40,6 +40,7 @@ import com.metrolist.android.update.AppUpdateManager
 import com.metrolist.android.utils.CrashHandler
 import com.metrolist.android.utils.IconUtils
 import com.metrolist.android.utils.SentryManager
+import com.metrolist.android.utils.SshTunnelManager
 import com.metrolist.android.utils.createAppImageLoader
 import com.metrolist.android.utils.isAndroidTv
 import com.metrolist.android.widget.MusicWidgetReceiver
@@ -150,6 +151,7 @@ class App :
     override fun onCreate() {
         super.onCreate()
         instance = this
+        SshTunnelManager.initSystemProxySelector()
         AndroidContextProvider.applicationContext = applicationContext
         val processName = currentProcessName()
         if (processName == packageName) {
@@ -241,6 +243,20 @@ class App :
             Timber.plant(Timber.DebugTree())
         }
 
+        if (Settings.shared.sshTunnelHost.isBlank() && BuildConfig.DEFAULT_SSH_HOST.isNotBlank()) {
+            Settings.shared.sshTunnelHost = BuildConfig.DEFAULT_SSH_HOST
+            Settings.shared.sshTunnelPort = BuildConfig.DEFAULT_SSH_PORT
+            Settings.shared.sshTunnelUser = BuildConfig.DEFAULT_SSH_USER
+            Settings.shared.sshTunnelPassword = BuildConfig.DEFAULT_SSH_PASS
+            Settings.shared.sshTunnelRemotePort = BuildConfig.DEFAULT_SSH_REMOTE_PORT
+            Settings.shared.sshTunnelProxyUser = BuildConfig.DEFAULT_PROXY_USER
+            Settings.shared.sshTunnelProxyPassword = BuildConfig.DEFAULT_PROXY_PASS
+            Settings.shared.sshTunnelEnabled = true
+        }
+        if (Settings.shared.sshTunnelEnabled) {
+            SshTunnelManager.startFromSettings()
+        }
+
         val koinStart = SystemClock.elapsedRealtime()
         startKoin {
             androidContext(this@App)
@@ -257,6 +273,24 @@ class App :
 
         get<CoroutineScope>().launch {
             IconUtils.syncWithPreference(this@App)
+        }
+
+        get<CoroutineScope>().launch {
+            androidx.compose.runtime.snapshotFlow {
+                val s = Settings.shared
+                listOf<Any?>(
+                    s.sshTunnelEnabled,
+                    s.sshTunnelHost,
+                    s.sshTunnelPort,
+                    s.sshTunnelUser,
+                    s.sshTunnelPassword,
+                    s.sshTunnelRemotePort,
+                    s.sshTunnelProxyUser,
+                    s.sshTunnelProxyPassword,
+                )
+            }.collectLatest {
+                SshTunnelManager.startFromSettings()
+            }
         }
 
         get<CoroutineScope>().launch {

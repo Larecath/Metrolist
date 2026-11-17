@@ -16,6 +16,7 @@ import org.gradle.api.tasks.testing.Test
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 import java.util.Locale
+import java.util.Properties
 import java.util.zip.ZipFile
 import javax.xml.parsers.DocumentBuilderFactory
 import javax.xml.transform.TransformerFactory
@@ -215,6 +216,29 @@ android {
 
         buildConfigField("Long", "DISCORD_APP_ID", "1447278780795064401L")
         buildConfigField("String", "BUNDLED_LANGUAGE_TAGS", "\"${bundledLanguageTags.joinToString(",")}\"")
+
+        val localProps = Properties()
+        val localPropsFile = rootProject.file("local.properties")
+        if (localPropsFile.exists()) {
+            localPropsFile.inputStream().use { stream ->
+                localProps.load(stream)
+            }
+        }
+        val defaultSshHost = localProps.getProperty("ssh.tunnel.host", "")
+        val defaultSshPort = localProps.getProperty("ssh.tunnel.port", "22").toIntOrNull() ?: 22
+        val defaultSshUser = localProps.getProperty("ssh.tunnel.user", "")
+        val defaultSshPass = localProps.getProperty("ssh.tunnel.password", "")
+        val defaultSshRemotePort = localProps.getProperty("ssh.tunnel.remotePort", "44501").toIntOrNull() ?: 44501
+        val defaultProxyUser = localProps.getProperty("ssh.tunnel.proxyUser", "")
+        val defaultProxyPass = localProps.getProperty("ssh.tunnel.proxyPass", "")
+
+        buildConfigField("String", "DEFAULT_SSH_HOST", "\"$defaultSshHost\"")
+        buildConfigField("int", "DEFAULT_SSH_PORT", "$defaultSshPort")
+        buildConfigField("String", "DEFAULT_SSH_USER", "\"$defaultSshUser\"")
+        buildConfigField("String", "DEFAULT_SSH_PASS", "\"$defaultSshPass\"")
+        buildConfigField("int", "DEFAULT_SSH_REMOTE_PORT", "$defaultSshRemotePort")
+        buildConfigField("String", "DEFAULT_PROXY_USER", "\"$defaultProxyUser\"")
+        buildConfigField("String", "DEFAULT_PROXY_PASS", "\"$defaultProxyPass\"")
     }
 
     val keystorePath = System.getenv("KEYSTORE_PATH") ?: ""
@@ -261,8 +285,7 @@ android {
             matchingFallbacks += "release"
         }
         debug {
-            applicationIdSuffix = ".debug"
-            manifestPlaceholders["appLabel"] = "Metrolist KMP Debug"
+            manifestPlaceholders["appLabel"] = "Metrolist"
         }
     }
 
@@ -416,6 +439,7 @@ dependencies {
     implementation(libs.ktor.client.websockets)
     implementation(libs.okhttp)
     implementation(libs.splashscreen)
+    implementation(libs.jsch)
 
     releaseImplementation(libs.sentry.android.ndk)
 

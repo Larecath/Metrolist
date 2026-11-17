@@ -176,6 +176,14 @@ import com.metrolist.shared.constants.SlimNavBarKey
 import com.metrolist.shared.constants.SpeedDialArtworkRefreshTimesKey
 import com.metrolist.shared.constants.SpeedDialSurprisePinnedKey
 import com.metrolist.shared.constants.SponsorBlockEnabledKey
+import com.metrolist.shared.constants.SshTunnelEnabledKey
+import com.metrolist.shared.constants.SshTunnelHostKey
+import com.metrolist.shared.constants.SshTunnelPasswordKey
+import com.metrolist.shared.constants.SshTunnelPortKey
+import com.metrolist.shared.constants.SshTunnelProxyPasswordKey
+import com.metrolist.shared.constants.SshTunnelProxyUserKey
+import com.metrolist.shared.constants.SshTunnelRemotePortKey
+import com.metrolist.shared.constants.SshTunnelUserKey
 import com.metrolist.shared.constants.SwipeToRemoveSongKey
 import com.metrolist.shared.constants.SwipeToSongKey
 import com.metrolist.shared.constants.TempoPitchPresetsJsonKey
@@ -324,6 +332,15 @@ class Settings(
     var animatedGradient by preference(true)
     var appIcon by preference(AppIconKey, "ORIGINAL")
     var enableHapticFeedback by preference(EnableHapticFeedbackKey, true)
+
+    var sshTunnelEnabled by preference(SshTunnelEnabledKey, false)
+    var sshTunnelHost by preference(SshTunnelHostKey, "")
+    var sshTunnelPort by preference(SshTunnelPortKey, 22)
+    var sshTunnelUser by preference(SshTunnelUserKey, "")
+    var sshTunnelPassword by preference(SshTunnelPasswordKey, "")
+    var sshTunnelRemotePort by preference(SshTunnelRemotePortKey, 44501)
+    var sshTunnelProxyUser by preference(SshTunnelProxyUserKey, "")
+    var sshTunnelProxyPassword by preference(SshTunnelProxyPasswordKey, "")
 
     var appLayout by preference(AppLayout.EXPRESS)
     var showMiniplayer by preference(false)
