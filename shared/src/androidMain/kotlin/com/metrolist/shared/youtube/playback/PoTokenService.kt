@@ -68,6 +68,25 @@ class PoTokenService : Service() {
             val data = message.data
             val requestedVisitor = data.getString(PoTokenIpc.VISITOR_DATA) ?: return true
             val videoId = data.getString(PoTokenIpc.VIDEO_ID) ?: return true
+            val proxyPort = data.getInt(PoTokenIpc.PROXY_PORT, 0)
+            if (proxyPort > 0) {
+                val pUser = data.getString(PoTokenIpc.PROXY_USER) ?: ""
+                val pPass = data.getString(PoTokenIpc.PROXY_PASS) ?: ""
+                if (pUser.isNotBlank()) {
+                    System.setProperty("java.net.socks.username", pUser)
+                    System.setProperty("java.net.socks.password", pPass)
+                    java.net.Authenticator.setDefault(
+                        object : java.net.Authenticator() {
+                            override fun getPasswordAuthentication(): java.net.PasswordAuthentication {
+                                return java.net.PasswordAuthentication(pUser, pPass.toCharArray())
+                            }
+                        }
+                    )
+                }
+                com.metrolist.shared.network.GlobalProxySelector.activeProxy =
+                    java.net.Proxy(java.net.Proxy.Type.SOCKS, java.net.InetSocketAddress("127.0.0.1", proxyPort))
+                YtLogger.d("PoTokenService", "Proxy configured on port $proxyPort")
+            }
             if (busy) return true
             busy = true
             scope.launch {
@@ -134,4 +153,7 @@ internal object PoTokenIpc {
     const val PLAYER_TOKEN = "playerRequestToken"
     const val VIDEO_TOKEN = "streamingDataToken"
     const val EXPIRES_AT = "expiresAtMs"
+    const val PROXY_PORT = "proxyPort"
+    const val PROXY_USER = "proxyUser"
+    const val PROXY_PASS = "proxyPass"
 }

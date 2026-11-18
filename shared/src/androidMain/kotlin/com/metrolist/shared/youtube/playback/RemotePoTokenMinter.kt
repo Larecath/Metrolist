@@ -50,6 +50,9 @@ internal class RemotePoTokenMinter(
                     val service = active.ready.await()
                     val response = CompletableDeferred<Bundle>()
                     pending = response
+                    val proxy = com.metrolist.shared.network.GlobalProxySelector.activeProxy
+                    val port = (proxy?.address() as? java.net.InetSocketAddress)?.port ?: 0
+                    val settings = com.metrolist.shared.settings.Settings.shared
                     service.send(
                         Message.obtain(null, PoTokenIpc.MINT, ++requestId, 0).apply {
                             replyTo = replies
@@ -58,6 +61,11 @@ internal class RemotePoTokenMinter(
                                     putString(PoTokenIpc.VIDEO_ID, videoId)
                                     putString(PoTokenIpc.VISITOR_DATA, visitorData)
                                     putString(PoTokenIpc.COOKIE, cookie)
+                                    if (port > 0) {
+                                        putInt(PoTokenIpc.PROXY_PORT, port)
+                                        putString(PoTokenIpc.PROXY_USER, settings.sshTunnelProxyUser)
+                                        putString(PoTokenIpc.PROXY_PASS, settings.sshTunnelProxyPassword)
+                                    }
                                 }
                         },
                     )
