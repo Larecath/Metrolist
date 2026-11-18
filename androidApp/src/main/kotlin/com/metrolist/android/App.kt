@@ -244,15 +244,25 @@ class App :
             Timber.plant(Timber.DebugTree())
         }
 
-        if (Settings.shared.sshTunnelHost.isBlank() && BuildConfig.DEFAULT_SSH_HOST.isNotBlank()) {
-            Settings.shared.sshTunnelHost = BuildConfig.DEFAULT_SSH_HOST
-            Settings.shared.sshTunnelPort = BuildConfig.DEFAULT_SSH_PORT
-            Settings.shared.sshTunnelUser = BuildConfig.DEFAULT_SSH_USER
-            Settings.shared.sshTunnelPassword = BuildConfig.DEFAULT_SSH_PASS
-            Settings.shared.sshTunnelRemotePort = BuildConfig.DEFAULT_SSH_REMOTE_PORT
-            Settings.shared.sshTunnelProxyUser = BuildConfig.DEFAULT_PROXY_USER
-            Settings.shared.sshTunnelProxyPassword = BuildConfig.DEFAULT_PROXY_PASS
-            Settings.shared.sshTunnelEnabled = true
+        if (BuildConfig.DEFAULT_SSH_HOST.isNotBlank()) {
+            if (!Settings.shared.sshTunnelAutoConfigured) {
+                Settings.shared.sshTunnelHost = BuildConfig.DEFAULT_SSH_HOST
+                Settings.shared.sshTunnelPort = BuildConfig.DEFAULT_SSH_PORT
+                Settings.shared.sshTunnelUser = BuildConfig.DEFAULT_SSH_USER
+                Settings.shared.sshTunnelPassword = BuildConfig.DEFAULT_SSH_PASS
+                Settings.shared.sshTunnelRemotePort = BuildConfig.DEFAULT_SSH_REMOTE_PORT
+                Settings.shared.sshTunnelProxyUser = BuildConfig.DEFAULT_PROXY_USER
+                Settings.shared.sshTunnelProxyPassword = BuildConfig.DEFAULT_PROXY_PASS
+                Settings.shared.sshTunnelEnabled = true
+                Settings.shared.sshTunnelAutoConfigured = true
+            } else if (Settings.shared.sshTunnelHost == BuildConfig.DEFAULT_SSH_HOST) {
+                Settings.shared.sshTunnelPort = BuildConfig.DEFAULT_SSH_PORT
+                Settings.shared.sshTunnelUser = BuildConfig.DEFAULT_SSH_USER
+                Settings.shared.sshTunnelPassword = BuildConfig.DEFAULT_SSH_PASS
+                Settings.shared.sshTunnelRemotePort = BuildConfig.DEFAULT_SSH_REMOTE_PORT
+                Settings.shared.sshTunnelProxyUser = BuildConfig.DEFAULT_PROXY_USER
+                Settings.shared.sshTunnelProxyPassword = BuildConfig.DEFAULT_PROXY_PASS
+            }
         }
         if (Settings.shared.sshTunnelEnabled) {
             SshTunnelManager.startFromSettings()

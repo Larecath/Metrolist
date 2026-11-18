@@ -228,6 +228,7 @@ val AndroidStorageAuditLocationKey = "androidStorageAuditLocation"
 val AndroidLastTrackedPlaylistSyncKey = "androidLastTrackedPlaylistSync"
 
 val SshTunnelEnabledKey = "sshTunnelEnabled"
+val SshTunnelAutoConfiguredKey = "sshTunnelAutoConfigured_v14"
 val SshTunnelHostKey = "sshTunnelHost"
 val SshTunnelPortKey = "sshTunnelPort"
 val SshTunnelUserKey = "sshTunnelUser"

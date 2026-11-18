@@ -176,6 +176,7 @@ import com.metrolist.shared.constants.SlimNavBarKey
 import com.metrolist.shared.constants.SpeedDialArtworkRefreshTimesKey
 import com.metrolist.shared.constants.SpeedDialSurprisePinnedKey
 import com.metrolist.shared.constants.SponsorBlockEnabledKey
+import com.metrolist.shared.constants.SshTunnelAutoConfiguredKey
 import com.metrolist.shared.constants.SshTunnelEnabledKey
 import com.metrolist.shared.constants.SshTunnelHostKey
 import com.metrolist.shared.constants.SshTunnelPasswordKey
@@ -334,6 +335,7 @@ class Settings(
     var enableHapticFeedback by preference(EnableHapticFeedbackKey, true)
 
     var sshTunnelEnabled by preference(SshTunnelEnabledKey, false)
+    var sshTunnelAutoConfigured by preference(SshTunnelAutoConfiguredKey, false)
     var sshTunnelHost by preference(SshTunnelHostKey, "")
     var sshTunnelPort by preference(SshTunnelPortKey, 22)
     var sshTunnelUser by preference(SshTunnelUserKey, "")

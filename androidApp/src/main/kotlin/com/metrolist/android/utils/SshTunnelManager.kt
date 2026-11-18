@@ -58,7 +58,18 @@ object SshTunnelManager {
     fun initSystemProxySelector() {
         try {
             ProxySelector.setDefault(GlobalProxySelector)
-            Log.i(TAG, "GlobalProxySelector installed as system default")
+            Authenticator.setDefault(
+                object : Authenticator() {
+                    override fun getPasswordAuthentication(): PasswordAuthentication? {
+                        val s = Settings.shared
+                        if (s.sshTunnelProxyUser.isNotBlank()) {
+                            return PasswordAuthentication(s.sshTunnelProxyUser, s.sshTunnelProxyPassword.toCharArray())
+                        }
+                        return null
+                    }
+                }
+            )
+            Log.i(TAG, "GlobalProxySelector and Authenticator installed as system default")
         } catch (e: Exception) {
             Log.e(TAG, "Failed to set default ProxySelector", e)
         }
