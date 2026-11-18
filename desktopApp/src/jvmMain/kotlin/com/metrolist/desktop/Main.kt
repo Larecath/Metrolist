@@ -86,6 +86,11 @@ import androidx.compose.ui.window.rememberWindowState
 import coil3.compose.setSingletonImageLoaderFactory
 import com.materialkolor.ktx.isLight
 import com.materialkolor.utils.ColorUtils
+import androidx.compose.runtime.snapshotFlow
+import com.metrolist.shared.network.SshTunnelManager
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import com.metrolist.desktop.backup.DesktopBackupRestoreManager
 import com.metrolist.desktop.crash.DesktopCrashRecovery
 import com.metrolist.desktop.deviceconnect.DesktopDeviceConnect
@@ -904,6 +909,51 @@ private fun runDesktopApp(args: Array<String>) {
     AppLogger.info("Main", "App Version: ${BuildConfig.APP_VERSION}")
     if (settings.enableLogging && System.getProperty("skiko.hardwareInfo.enabled") == null) {
         System.setProperty("skiko.hardwareInfo.enabled", "true")
+    }
+
+    SshTunnelManager.initSystemProxySelector()
+    if (com.metrolist.shared.BuildConfig.DEFAULT_SSH_HOST.isNotBlank()) {
+        if (!settings.sshTunnelAutoConfigured) {
+            settings.sshTunnelHost = com.metrolist.shared.BuildConfig.DEFAULT_SSH_HOST
+            settings.sshTunnelPort = com.metrolist.shared.BuildConfig.DEFAULT_SSH_PORT
+            settings.sshTunnelUser = com.metrolist.shared.BuildConfig.DEFAULT_SSH_USER
+            settings.sshTunnelPassword = com.metrolist.shared.BuildConfig.DEFAULT_SSH_PASS
+            settings.sshTunnelRemotePort = com.metrolist.shared.BuildConfig.DEFAULT_SSH_REMOTE_PORT
+            settings.sshTunnelProxyUser = com.metrolist.shared.BuildConfig.DEFAULT_PROXY_USER
+            settings.sshTunnelProxyPassword = com.metrolist.shared.BuildConfig.DEFAULT_PROXY_PASS
+            settings.sshTunnelEnabled = true
+            settings.sshTunnelAutoConfigured = true
+        } else if (settings.sshTunnelHost == com.metrolist.shared.BuildConfig.DEFAULT_SSH_HOST) {
+            settings.sshTunnelPort = com.metrolist.shared.BuildConfig.DEFAULT_SSH_PORT
+            settings.sshTunnelUser = com.metrolist.shared.BuildConfig.DEFAULT_SSH_USER
+            settings.sshTunnelPassword = com.metrolist.shared.BuildConfig.DEFAULT_SSH_PASS
+            settings.sshTunnelRemotePort = com.metrolist.shared.BuildConfig.DEFAULT_SSH_REMOTE_PORT
+            settings.sshTunnelProxyUser = com.metrolist.shared.BuildConfig.DEFAULT_PROXY_USER
+            settings.sshTunnelProxyPassword = com.metrolist.shared.BuildConfig.DEFAULT_PROXY_PASS
+        }
+    }
+    if (settings.sshTunnelEnabled) {
+        SshTunnelManager.startFromSettings()
+    }
+    applicationScope.launch {
+        snapshotFlow {
+            val s = Settings.shared
+            listOf<Any?>(
+                s.sshTunnelEnabled,
+                s.sshTunnelHost,
+                s.sshTunnelPort,
+                s.sshTunnelUser,
+                s.sshTunnelPassword,
+                s.sshTunnelRemotePort,
+                s.sshTunnelProxyUser,
+                s.sshTunnelProxyPassword,
+            )
+        }
+            .drop(1)
+            .distinctUntilChanged()
+            .collectLatest {
+                SshTunnelManager.startFromSettings()
+            }
     }
 
     val windowsIdentity =

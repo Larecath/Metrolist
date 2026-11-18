@@ -1,11 +1,10 @@
-package com.metrolist.android.utils
+package com.metrolist.shared.network
 
-import android.util.Log
 import com.jcraft.jsch.JSch
 import com.jcraft.jsch.Session
 import com.jcraft.jsch.UserInfo
-import com.metrolist.shared.network.GlobalProxySelector
 import com.metrolist.shared.settings.Settings
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,6 +19,29 @@ import java.net.InetSocketAddress
 import java.net.PasswordAuthentication
 import java.net.Proxy
 import java.net.ProxySelector
+
+private object SshLog {
+    private val logMethodI by lazy { runCatching { Class.forName("android.util.Log").getMethod("i", String::class.java, String::class.java) }.getOrNull() }
+    private val logMethodD by lazy { runCatching { Class.forName("android.util.Log").getMethod("d", String::class.java, String::class.java) }.getOrNull() }
+    private val logMethodW by lazy { runCatching { Class.forName("android.util.Log").getMethod("w", String::class.java, String::class.java) }.getOrNull() }
+    private val logMethodE by lazy { runCatching { Class.forName("android.util.Log").getMethod("e", String::class.java, String::class.java, Throwable::class.java) }.getOrNull() }
+
+    fun i(tag: String, msg: String) {
+        logMethodI?.invoke(null, tag, msg) ?: println("[$tag] $msg")
+    }
+    fun d(tag: String, msg: String) {
+        logMethodD?.invoke(null, tag, msg) ?: Unit
+    }
+    fun w(tag: String, msg: String) {
+        logMethodW?.invoke(null, tag, msg) ?: println("[$tag WARN] $msg")
+    }
+    fun e(tag: String, msg: String, tr: Throwable? = null) {
+        logMethodE?.invoke(null, tag, msg, tr) ?: run {
+            System.err.println("[$tag ERROR] $msg")
+            tr?.printStackTrace()
+        }
+    }
+}
 
 object SshTunnelManager {
     private const val TAG = "SshTunnelManager"
@@ -47,11 +69,11 @@ object SshTunnelManager {
             JSch.setLogger(object : com.jcraft.jsch.Logger {
                 override fun isEnabled(level: Int): Boolean = true
                 override fun log(level: Int, message: String) {
-                    Log.d(TAG, "[JSCH $level] $message")
+                    SshLog.d(TAG, "[JSCH $level] $message")
                 }
             })
         } catch (e: Throwable) {
-            Log.e(TAG, "Failed to set JSch logger", e)
+            SshLog.e(TAG, "Failed to set JSch logger", e)
         }
     }
 
@@ -69,9 +91,9 @@ object SshTunnelManager {
                     }
                 }
             )
-            Log.i(TAG, "GlobalProxySelector and Authenticator installed as system default")
+            SshLog.i(TAG, "GlobalProxySelector and Authenticator installed as system default")
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to set default ProxySelector", e)
+            SshLog.e(TAG, "Failed to set default ProxySelector", e)
         }
     }
 
@@ -79,13 +101,13 @@ object SshTunnelManager {
     fun startFromSettings() {
         val settings = Settings.shared
         if (!settings.sshTunnelEnabled) {
-            Log.i(TAG, "SSH Tunnel disabled in settings")
+            SshLog.i(TAG, "SSH Tunnel disabled in settings")
             stop()
             return
         }
         val configKey = "${settings.sshTunnelHost}:${settings.sshTunnelPort}:${settings.sshTunnelUser}:${settings.sshTunnelPassword}:${settings.sshTunnelRemotePort}:${settings.sshTunnelProxyUser}:${settings.sshTunnelProxyPassword}"
         if (session?.isConnected == true && currentConfigKey == configKey) {
-            Log.i(TAG, "SSH tunnel already connected with current config")
+            SshLog.i(TAG, "SSH tunnel already connected with current config")
             return
         }
         start(
@@ -112,7 +134,7 @@ object SshTunnelManager {
     ) {
         val configKey = "$host:$port:$username:$password:$remoteTargetPort:$proxyUser:$proxyPass"
         if (session?.isConnected == true && currentConfigKey == configKey) {
-            Log.i(TAG, "Tunnel already active for $username@$host:$port")
+            SshLog.i(TAG, "Tunnel already active for $username@$host:$port")
             return
         }
 
@@ -140,7 +162,7 @@ object SshTunnelManager {
 
         tunnelJob = scope.launch {
             _state.value = TunnelState.Connecting
-            Log.i(TAG, "Starting SSH tunnel to $username@$host:$port (remote target: $remoteTargetPort)")
+            SshLog.i(TAG, "Starting SSH tunnel to $username@$host:$port (remote target: $remoteTargetPort)")
 
             while (isActive) {
                 var currentSession: Session? = null
@@ -168,31 +190,31 @@ object SshTunnelManager {
                         override fun promptPassphrase(message: String?): Boolean = true
                         override fun promptYesNo(message: String?): Boolean = true
                         override fun showMessage(message: String?) {
-                            Log.d(TAG, "JSCH showMessage: $message")
+                            SshLog.d(TAG, "JSCH showMessage: $message")
                         }
                     }
 
-                    Log.i(TAG, "Connecting JSch session...")
+                    SshLog.i(TAG, "Connecting JSch session...")
                     currentSession.connect(20000)
-                    Log.i(TAG, "JSch session connected! Establishing port forwarding to $remoteTargetPort...")
+                    SshLog.i(TAG, "JSch session connected! Establishing port forwarding to $remoteTargetPort...")
 
                     val localPort = currentSession.setPortForwardingL("127.0.0.1", 0, "127.0.0.1", remoteTargetPort)
                     session = currentSession
 
                     GlobalProxySelector.activeProxy = Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", localPort))
                     _state.value = TunnelState.Connected(host, port, localPort)
-                    Log.i(TAG, "SSH tunnel ready! Local SOCKS on 127.0.0.1:$localPort -> remote 127.0.0.1:$remoteTargetPort")
+                    SshLog.i(TAG, "SSH tunnel ready! Local SOCKS on 127.0.0.1:$localPort -> remote 127.0.0.1:$remoteTargetPort")
 
                     while (isActive && currentSession.isConnected) {
                         delay(3000)
                     }
-                    Log.w(TAG, "Session disconnected or loop exited (isActive=$isActive, isConnected=${currentSession.isConnected})")
+                    SshLog.w(TAG, "Session disconnected or loop exited (isActive=$isActive, isConnected=${currentSession.isConnected})")
                 } catch (e: Throwable) {
-                    if (e is kotlinx.coroutines.CancellationException) {
-                        Log.i(TAG, "SSH Tunnel job cancelled")
+                    if (e is CancellationException) {
+                        SshLog.i(TAG, "SSH Tunnel job cancelled")
                         throw e
                     }
-                    Log.e(TAG, "SSH Tunnel error: ${e.message}", e)
+                    SshLog.e(TAG, "SSH Tunnel error: ${e.message}", e)
                     _state.value = TunnelState.Error(e.message ?: "Connection failed")
                 } finally {
                     try {
@@ -205,7 +227,7 @@ object SshTunnelManager {
                 }
 
                 if (!isActive) break
-                Log.i(TAG, "Will retry SSH connection in 5 seconds...")
+                SshLog.i(TAG, "Will retry SSH connection in 5 seconds...")
                 delay(5000)
             }
         }
@@ -222,6 +244,6 @@ object SshTunnelManager {
         session = null
         GlobalProxySelector.activeProxy = null
         _state.value = TunnelState.Disconnected
-        Log.i(TAG, "SSH Tunnel stopped")
+        SshLog.i(TAG, "SSH Tunnel stopped")
     }
 }

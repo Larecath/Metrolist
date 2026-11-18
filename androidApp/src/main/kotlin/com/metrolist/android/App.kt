@@ -40,7 +40,7 @@ import com.metrolist.android.update.AppUpdateManager
 import com.metrolist.android.utils.CrashHandler
 import com.metrolist.android.utils.IconUtils
 import com.metrolist.android.utils.SentryManager
-import com.metrolist.android.utils.SshTunnelManager
+import com.metrolist.shared.network.SshTunnelManager
 import com.metrolist.android.utils.createAppImageLoader
 import com.metrolist.android.utils.isAndroidTv
 import com.metrolist.android.widget.MusicWidgetReceiver

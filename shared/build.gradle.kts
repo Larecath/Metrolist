@@ -394,6 +394,7 @@ kotlin {
                     implementation(libs.ktor.client.logging)
                     implementation(libs.ktor.client.cio)
                     implementation(libs.okhttp)
+                    implementation(libs.jsch)
                 }
             }
         getByName("androidMain") {
@@ -593,10 +594,25 @@ val generateBuildConfig =
                 "LYPRIO_HMAC_KEY must be a base64-encoded 32-byte key"
             }
         }
+        val defaultSshHost = localProperties.getProperty("ssh.tunnel.host", "")
+        val defaultSshPort = localProperties.getProperty("ssh.tunnel.port", "22").toIntOrNull() ?: 22
+        val defaultSshUser = localProperties.getProperty("ssh.tunnel.user", "")
+        val defaultSshPass = localProperties.getProperty("ssh.tunnel.password", "")
+        val defaultSshRemotePort = localProperties.getProperty("ssh.tunnel.remotePort", "44501").toIntOrNull() ?: 44501
+        val defaultProxyUser = localProperties.getProperty("ssh.tunnel.proxyUser", "")
+        val defaultProxyPass = localProperties.getProperty("ssh.tunnel.proxyPass", "")
+
         inputs.property("lastFmKey", lastFmKey)
         inputs.property("lastFmSecret", lastFmSecret)
         inputs.property("lyprioBaseUrl", lyprioBaseUrl)
         inputs.property("lyprioHmacKey", lyprioHmacKey)
+        inputs.property("defaultSshHost", defaultSshHost)
+        inputs.property("defaultSshPort", defaultSshPort)
+        inputs.property("defaultSshUser", defaultSshUser)
+        inputs.property("defaultSshPass", defaultSshPass)
+        inputs.property("defaultSshRemotePort", defaultSshRemotePort)
+        inputs.property("defaultProxyUser", defaultProxyUser)
+        inputs.property("defaultProxyPass", defaultProxyPass)
         val sourceRevision =
             providers
                 .gradleProperty("metrolist.sourceRevision")
@@ -635,6 +651,13 @@ val generateBuildConfig =
                     const val SOURCE_REVISION = "${inputs.properties["sourceRevision"]}"
                     const val BUNDLED_LANGUAGE_TAGS = "${inputs.properties["bundledLanguageTags"]}"
                     const val DEBUG = ${inputs.properties["debug"]}
+                    const val DEFAULT_SSH_HOST = "${inputs.properties["defaultSshHost"]}"
+                    const val DEFAULT_SSH_PORT = ${inputs.properties["defaultSshPort"]}
+                    const val DEFAULT_SSH_USER = "${inputs.properties["defaultSshUser"]}"
+                    const val DEFAULT_SSH_PASS = "${inputs.properties["defaultSshPass"]}"
+                    const val DEFAULT_SSH_REMOTE_PORT = ${inputs.properties["defaultSshRemotePort"]}
+                    const val DEFAULT_PROXY_USER = "${inputs.properties["defaultProxyUser"]}"
+                    const val DEFAULT_PROXY_PASS = "${inputs.properties["defaultProxyPass"]}"
                 }
                 """.trimIndent(),
             )
